@@ -27,8 +27,14 @@ class Board:
     pairs = {}
     occurencies = {}
 
-    def remove_pieces(self):
-        for i in range(len(self.board) - 1, 0, -1):
+    def remove_piece(self, ind):
+        self.board[ind].used = False
+        self.board[ind].col = 0
+        self.board[ind].row = 0
+        self.board.pop(ind)
+
+    def remove_pieces(self, ind):
+        for i in range(len(self.board) - 1, ind - 1, -1):
             self.board[i].used = False
             self.board[i].row = 0
             self.board[i].col = 0
@@ -64,14 +70,20 @@ def checkMatch(piece1: Pieces, col: int, row: int) -> int:
         return 1
 
     if col < b.columns and row == 1:
-        checkMatchRight(piece1, col, row)
+        r = checkMatchRight(piece1, col, row)
+        """if r == 0:
+            return 0"""
 
-    if row < b.rows:
-        checkMatchBellow(col, row)
+    if row < b.rows and col == b.columns:
+        r = checkMatchBellow(col, row)
+        """if r == 0:
+            return 0"""
 
     if 1 < row <= b.rows and 1 <= col <= b.columns:
-        checkMatchRightBellow(piece1, col, row)
-    
+        r = checkMatchRightBellow(piece1, col, row)
+        """if r == 0:
+            return 0"""
+
     return 0
 
 
@@ -80,8 +92,10 @@ def checkMatchRight(piece1: Pieces, col: int, row: int) -> int:
     bellow = piece1.numbers[2]
 
     if b.pairs.get((bellow, above)) is None:
+        col -= 1
+        b.remove_piece(b.board.index(piece1))
         return 0
-        
+
     for match in b.pairs[(bellow, above)]:
         if match.used is False:
             match.numbers = match.numbers[match.numbers.index(above):] + \
@@ -96,75 +110,114 @@ def checkMatchRight(piece1: Pieces, col: int, row: int) -> int:
             ret = checkMatch(match, col, row)
             if ret == 1:
                 return 1
+            """else:
+                print("Continue right")
+                col -= 1
+                b.remove_piece(b.board.index(match))
+                continue"""
     return 0
 
 
 def checkMatchBellow(col: int, row: int) -> int:
-    for p in b.board:
-        if p.row == row and p.col == 1:
-            right = p.numbers[2]
-            left = p.numbers[3]
-            if b.pairs.get((left, right)) is None:
-                return 0
-            for match in b.pairs[(left, right)]:
-                if match.used is False:
-                    match.numbers = match.numbers[match.numbers.index(left):] + \
-                                    match.numbers[:match.numbers.index(left)]
-                    
-                    row += 1
-                    col = 1
-                    match.col = col
-                    match.row = row
-                    match.used = True
-                    b.board.append(match)
-                    
-                    ret = checkMatch(match, col, row)
-                    if ret == 1:
-                        return 1
+    ind = (len(b.board) % b.columns) * row
+    print("row", row, "col", col)
+    print("indice", ind)
+    print(len(b.board))
+    print("-"*20)
+    right = b.board[ind].numbers[2]
+    left = b.board[ind].numbers[3]
+
+    if b.pairs.get((left, right)) is None:
+        row -= 1
+        col = b.columns
+        b.remove_pieces(ind)
+        return 0
+    for match in b.pairs[(left, right)]:
+        if match.used is False:
+            match.numbers = match.numbers[match.numbers.index(left):] + \
+                            match.numbers[:match.numbers.index(left)]
+
+            row += 1
+            col = 1
+            match.col = col
+            match.row = row
+            match.used = True
+            b.board.append(match)
+
+            ret = checkMatch(match, col, row)
+            if ret == 1:
+                return 1
+            """else:
+                print("Continue bellow")
+                row -= 1
+                col = b.columns
+                b.remove_piece(b.board.index(match))
+                continue"""
     return 0
 
 
 def checkMatchRightBellow(piece1: Pieces, col: int, row: int) -> int:
     above = piece1.numbers[1]
     bellow = piece1.numbers[2]
+    print(piece1.numbers)
+    possible_vertical = b.pairs.get((bellow, above))
 
-    possible_horizontal = b.pairs[(bellow, above)]
-    if possible_horizontal is None:
+    if possible_vertical is None:
+        col -= 1
+        b.remove_piece(b.board.index(piece1))
         return 0
 
-    for p in b.board:
-        if p.row == row - 1 and p.col == col + 1:
-            right = p.numbers[2]
-            left = p.numbers[3]
+    ind = (len(b.board) % b.columns) * (row - 1)
+    print("row", row-1, "col", col+1)
+    print("indice", ind)
+    print(len(b.board))
+    print(b.board[ind].numbers)
+    print()
+    right = b.board[ind].numbers[2]
+    left = b.board[ind].numbers[3]
 
-            possible_vertical = b.pairs[(left, right)]
-            if possible_vertical is None:
-                return 0
-            intersection = possible_horizontal and possible_vertical
-            if intersection is None:
-                return 0
+    possible_horizontal = b.pairs.get((left, right))
 
-            for p in intersection:
-                if p.used is False:
-                    p.numbers = p.numbers[p.numbers.index(above):] + \
-                                p.numbers[:p.numbers.index(above)]
-                    col += 1
-                    p.col = col
-                    p.row = row
-                    p.used = True
-                    b.board.append(p)
+    if possible_horizontal is None:
+        col -= 1
+        b.remove_piece(b.board.index(piece1))
+        return 0
 
-                    ret = checkMatch(p, col, row)
-                    if ret == 1:
-                        return 1
+    intersection = list(set(possible_horizontal) & set(possible_vertical))
+    if intersection is []:
+        col -= 1
+        b.remove_piece(b.board.index(piece1))
+        return 0
+    print(f"bellow {bellow} - above {above} - left {left} - right {right}")
+
+    for match in intersection:
+        if match.used is False:
+
+            print("piece", p.numbers)
+            print("*"*20)
+            match.numbers = match.numbers[match.numbers.index(above):] + \
+                            match.numbers[:match.numbers.index(above)]
+            col += 1
+            match.col = col
+            match.row = row
+            match.used = True
+            b.board.append(match)
+
+            ret = checkMatch(match, col, row)
+            if ret == 1:
+                return 1
+            """else:
+                print("Continue right bellow")
+                col -= 1
+                b.remove_piece(b.board.index(match))
+                continue"""
     return 0
 
 
 def reset():
     global p
     p = Pieces()
-    b.remove_pieces()
-    b.board.pop(0)
+    b.remove_pieces(0)
     for i in range(b.n_pieces - 1, -1, -1):
         b.pieces_arr.pop(i)
     b.pairs = {}
@@ -185,9 +238,8 @@ if __name__ == "__main__":
     b = Board()
 
     for _ in range(n):
-        
         b.n_pieces, b.rows, b.columns = map(int, input().split())
-        
+
         for i in range(b.n_pieces):
             p = Pieces()
             p.numbers = list(map(int, input().split()))
@@ -208,13 +260,11 @@ if __name__ == "__main__":
             if odd > 4:
                 break
         if odd > 4:
-            outln("impossible puzzle!odd\n")
+            outln("impossible puzzle!\n")
             reset()
             continue
 
-        checkMatch(b.board[0], 1, 1)
-        for i in b.board:
-            print(i.numbers)
+        r = checkMatch(b.board[0], 1, 1)
 
         if len(b.board) == b.n_pieces:
             b.printBoard()
