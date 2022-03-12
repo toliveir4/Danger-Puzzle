@@ -213,7 +213,40 @@ def checkMatchRightBellow(piece1: Pieces, col: int, row: int) -> int:
                 continue"""
     return 0
 
+def tree(row, col):
+    for i in b.board: #encontra a peca que esta no posicao (row-1, col)
+        if i.row == row and i.col == col-1:
+            piece1 = i
 
+    above = piece1.numbers[1]
+    below = piece1.numbers[2]
+
+    if b.pairs.get((below, above)) is None: #se o par nao existir retorna false
+        return False
+
+    for match in b.pairs[(below, above)]:
+        if match.used is False:
+            match.numbers = match.numbers[match.numbers.index(above):] + match.numbers[:match.numbers.index(above)]
+
+            match.col = col
+            match.row = row
+            match.used = True
+            col += 1
+            b.board.append(match)
+
+            if row*(col-1) == b.n_pieces:   #ultima peca do board
+                return True
+
+            if tree(row, col) == True:
+                return True
+         
+            col -= 1
+            match.used = False
+            match.col = 0
+            match.row = 0
+            b.remove_piece(b.board.index(match)) 
+            
+            
 def reset():
     global p
     p = Pieces()
@@ -264,10 +297,16 @@ if __name__ == "__main__":
             reset()
             continue
 
-        r = checkMatch(b.board[0], 1, 1)
+        #r = checkMatch(b.board[0], 1, 1)
+        if tree(1, 2) == True:
+            b.printBoard()
+        else:
+            #print(len(b.board))
+            outln("impossible puzzle!\n")
+        reset()
 
-        if len(b.board) == b.n_pieces:
+        '''if len(b.board) == b.n_pieces:
             b.printBoard()
         else:
             outln("impossible puzzle!\n")
-        reset()
+        reset()'''
