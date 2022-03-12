@@ -226,7 +226,12 @@ def tree(row, col):
 
     for match in b.pairs[(below, above)]:
         if match.used is False:
-            match.numbers = match.numbers[match.numbers.index(above):] + match.numbers[:match.numbers.index(above)]
+            for i in range(4):
+                if match.numbers[i] == above and match.numbers[(i-1)%4] == below:
+                    print(match.numbers[i:])
+                    print(match.numbers[:i])
+                    match.numbers = match.numbers[i:] + match.numbers[:i]
+                    break
 
             match.col = col
             match.row = row
@@ -246,7 +251,7 @@ def tree(row, col):
             match.row = 0
             b.remove_piece(b.board.index(match)) 
             
-            
+
 def reset():
     global p
     p = Pieces()
