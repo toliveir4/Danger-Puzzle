@@ -167,6 +167,8 @@ bool tree(Board *b, int row, int col)
     Piece *piece = NULL;
     Piece *piece2 = NULL;
 
+    //cout << "row: " << row << " col: " << col << endl;
+
     if (b == NULL || b->board.empty())
         return false; // verifica se o ponteiro para a Board existe ou nao e verifica se o vetor de pecas esta vazio
 
@@ -208,9 +210,9 @@ bool tree(Board *b, int row, int col)
         if (pairs.find(p2) == pairs.end())
             return false;
 
-        /*if (addPrimeiraColuna(b, row, col, p2)) { //por fazer
+        if (addPrimeiraColuna(b, row, col, p2)) { //nao esta a aplicar a rotacao correta
             return true;
-        }  */
+        }  
     }
     else if (row > 1 && col > 1)
     {
@@ -266,7 +268,7 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
 
             b->board.push_back(match);
 
-            if ((row * (col - 1)) == b->n_pieces)
+            if ((row * col) == b->n_pieces)
                 return true;
 
             if (col == b->columns) // se estiver no fim da linha passa para a de baixo
@@ -294,6 +296,54 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
             b->removeToALimit(pieceIndex);
         }
     }
+    return false;
+}
+
+bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p) {
+    for (auto &match : pairs[p]) {
+        if (match->used == false) {
+            int index = find(match->num.begin(), match->num.end(), p.second) - match->num.begin(); // indice do left
+            int index2 = find(match->num.begin(), match->num.end(), p.first) - match->num.begin(); // indice do right
+
+            if (index == (index2 + 1) % 4) // verifica se esta a usar o numero certo para a rotacao
+                match->Rotate(index);
+            else
+                match->Rotate((index2 + 1) % 4);
+
+            match->col = col;
+            match->row = row;
+            match->used = true;
+
+            for(int i = 0; i < 4; i++)
+                cout << match->num[i] << " ";
+            cout << endl;
+
+            b->board.push_back(match);
+
+            if ((row * col) == b->n_pieces)
+                return true;
+
+            if (b->columns == 1) 
+                row++;
+            else
+                col++;
+            
+
+            if (tree(b, row, col) == true)
+                return true;
+
+            
+            //volta para o final da linha anterior
+            row--;
+            col = b->columns;
+            
+            match->row = match->col = 0;
+            match->used = false;
+            int pieceIndex = find(b->board.begin(), b->board.end(), match) - b->board.begin();
+            b->removeToALimit(pieceIndex);
+        }
+    }
+
     return false;
 }
 
@@ -369,7 +419,11 @@ int main()
             cout << endl;
         }*/
 
-        bool res = tree(b, 1, 2);
+        bool res = false;
+        if (b->columns == 1)
+            res = tree(b, 2, 1);
+        else
+            res = tree(b, 1, 2);
         cout << "RESULT: " << res << endl;
         cout << "SIZE DA PUTA: " << b->board.size() << endl;
 
