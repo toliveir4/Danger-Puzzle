@@ -1,10 +1,15 @@
-*** Algorithmic-Strategies/output.txt	2022-03-12 14:47:14.869852700 +0000
+*** Algorithmic-Strategies/output.txt	2022-03-13 02:26:15.709102500 +0000
 --- Algorithmic-Strategies/test_output.txt	2022-03-08 20:54:06.561521100 +0000
 ***************
-*** 1,3 ****
+*** 1,8 ****
+! 2 5  5 4  4 3
+! 3 1  1 5  5 2
 ! impossible puzzle!
-! impossible puzzle!
-! impossible puzzle!
+! 1 2  2 5
+! 4 3  3 1
+! 
+! 4 3  3 1
+! 5 2  2 4
 --- 1,8 ----
 ! 2 5  5 4  4 3
 ! 3 1  1 5  5 2
