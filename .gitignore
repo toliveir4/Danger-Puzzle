@@ -1,6 +1,8 @@
 # TXT FILES
-# *.txt
+*.txt
 
+# Executable
+*.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
