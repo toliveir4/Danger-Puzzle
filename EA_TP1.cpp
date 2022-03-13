@@ -130,15 +130,181 @@ public:
 map<pair<int, int>, vector<Piece *>> pairs; // equivalente a dicionarios em python
 map<int, int> occurrences;
 
-void getPairsAndOccurrencies(Piece *p);
+/*
 int checkMatch(Board *b, Piece *piece, int col, int row);
 int checkMatchRight(Board *b, Piece *piece, int col, int row);
 int checkMatchBellow(Board *b, int col, int row);
 int checkMatchRightBellow(Board *b, Piece *piece, int col, int row);
+*/
 
+void getPairsAndOccurrencies(Piece *p);
 bool tree(Board *b, int row, int col);
-
+bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p);
+bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p);
 void reset(Board *b);
+void getPairsAndOccurrencies(Piece *p)
+{
+    // percorre a peca e conta as occorencias de cada numero
+    // cria ainda os 4 pares possiveis na peca
+    for (int i = 0; i < 4; i++)
+    {
+        if (occurrences.find(p->num[i]) == occurrences.end())
+            occurrences.insert({p->num[i], 1});
+        else
+            occurrences[p->num[i]]++;
+
+        // o pair cria uma lista com 2 elementos que vai funcionar como key do map
+        pair<int, int> pp = {p->num[i], p->num[(i + 1) % 4]};
+        if (pairs.find(pp) == pairs.end())
+            pairs[pp] = {p};
+        else
+            pairs[pp].push_back(p);
+    }
+}
+
+bool tree(Board *b, int row, int col)
+{
+    Piece *piece = NULL;
+    Piece *piece2 = NULL;
+
+    if (b == NULL || b->board.empty())
+        return false; // verifica se o ponteiro para a Board existe ou nao e verifica se o vetor de pecas esta vazio
+
+    // peca esta na primeira linha
+    if (row == 1)
+    {
+        for (auto &i : b->board)
+        {
+            if (i->row == row && i->col == col - 1)
+                piece = i;
+        }
+
+        // nao foi encontrada nenhuma peca com a coluna e a linha pretendida
+        if (piece == NULL)
+            return false;
+
+        pair<int, int> p = piece->getBellowAbove();
+        // se o par da peca da esquerda nao existir
+        if (pairs.find(p) == pairs.end())
+            return false;
+
+        if (addPrimeiraLinha(b, row, col, p))
+        {
+            return true;
+        }
+    }
+    else if (row > 1 && col == 1)
+    {
+        // get peca de cima
+        int ind = (b->board.size() % b->columns) * (row - 1); // indice da peca de cima
+        piece2 = b->board[ind];
+
+        // nao foi encontrada nenhuma peca de cima para as linhas depois da primeira
+        if (piece2 == NULL)
+            return false;
+
+        pair<int, int> p2 = piece2->getLeftRight();
+        // se o par da peca de cima nao existir
+        if (pairs.find(p2) == pairs.end())
+            return false;
+
+        /*if (addPrimeiraColuna(b, row, col, p2)) { //por fazer
+            return true;
+        }  */
+    }
+    else if (row > 1 && col > 1)
+    {
+        // get peca de cima e da esquerda
+        int ind = (b->board.size() % b->columns) * (row - 1); // indice da peca de cima
+        piece2 = b->board[ind];
+
+        for (auto &i : b->board)
+        {
+            if (i->row == row && i->col == col - 1)
+                piece = i;
+        }
+
+        // nao foi encontrada nenhuma peca com a coluna e a linha pretendida
+        // nao foi encontrada nenhuma peca de cima para as linhas depois da primeira
+        if (piece == NULL || piece2 == NULL)
+            return false;
+
+        pair<int, int> p = piece->getBellowAbove();
+        // se o par da peca da esquerda nao existir
+        if (pairs.find(p) == pairs.end())
+            return false;
+
+        pair<int, int> p2 = piece2->getLeftRight();
+        // se o par da peca de cima nao existir
+        if (pairs.find(p2) == pairs.end())
+            return false;
+    }
+    return false;
+}
+
+bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
+{
+    for (auto &match : pairs[p])
+    {
+        // cout << " -> " << piece->num[0] << piece->num[1] << piece->num[2] << piece->num[3] << endl;
+        //  cout << match->operator==(piece) << endl;
+        if (match->used == false)
+        {
+            // cout << match->num[0] << " " << match->num[1] << " " << match->num[2] << " " << match->num[3] << endl;
+
+            int index = find(match->num.begin(), match->num.end(), p.second) - match->num.begin(); // indice do above
+            int index2 = find(match->num.begin(), match->num.end(), p.first) - match->num.begin(); // indice do bellow
+
+            if (index == (index2 + 1) % 4) // verifica se esta a usar o numero certo para a rotacao
+                match->Rotate(index);
+            else
+                match->Rotate((index2 + 1) % 4);
+
+            match->col = col;
+            match->row = row;
+            match->used = true;
+
+            b->board.push_back(match);
+
+            if ((row * (col - 1)) == b->n_pieces)
+                return true;
+
+            if (col == b->columns) // se estiver no fim da linha passa para a de baixo
+            {
+                row++;
+                col = 1;
+            }
+            else
+                col++;
+
+            if (tree(b, row, col) == true)
+                return true;
+
+            if (col == 1)
+            { // se estiver no inicio da linha volta para o final da linha anterior
+                row--;
+                col = b->columns;
+            }
+            else
+                col--;
+
+            match->row = match->col = 0;
+            match->used = false;
+            int pieceIndex = find(b->board.begin(), b->board.end(), match) - b->board.begin();
+            b->removeToALimit(pieceIndex);
+        }
+    }
+    return false;
+}
+
+void reset(Board *b)
+{
+    b->board.clear();
+    b->pieces.clear();
+    pairs.clear();
+    occurrences.clear();
+    b->n_pieces = b->columns = b->rows = 0;
+}
 
 int main()
 {
@@ -202,14 +368,14 @@ int main()
             }
             cout << endl;
         }*/
-        /*
-        bool res = tree(b, 1, 2);
-        cout << res << endl;
-        cout << "SIZE DA PUTA: " << b->board.size() << endl;
-        */
-        checkMatch(b, b->board[0], 1, 1);
 
-        if ((int) b->board.size() == b->n_pieces)
+        bool res = tree(b, 1, 2);
+        cout << "RESULT: " << res << endl;
+        cout << "SIZE DA PUTA: " << b->board.size() << endl;
+
+        // checkMatch(b, b->board[0], 1, 1);
+
+        if (res)
             b->printBoard();
         else
             cout << "impossible puzzle!\n";
@@ -217,26 +383,9 @@ int main()
     }
 }
 
-void getPairsAndOccurrencies(Piece *p)
-{
-    // percorre a peca e conta as occorencias de cada numero
-    // cria ainda os 4 pares possiveis na peca
-    for (int i = 0; i < 4; i++)
-    {
-        if (occurrences.find(p->num[i]) == occurrences.end())
-            occurrences.insert({p->num[i], 1});
-        else
-            occurrences[p->num[i]]++;
+/**********************************NAO ESTA A SER USADO**********************************/
 
-        // o pair cria uma lista com 2 elementos que vai funcionar como key do map
-        pair<int, int> pp = {p->num[i], p->num[(i + 1) % 4]};
-        if (pairs.find(pp) == pairs.end())
-            pairs[pp] = {p};
-        else
-            pairs[pp].push_back(p);
-    }
-}
-
+/*
 int checkMatch(Board *b, Piece *piece, int col, int row)
 {
     if (col == b->columns && row == b->rows)
@@ -283,9 +432,7 @@ int checkMatchRight(Board *b, Piece *piece, int col, int row)
             if (index == (index2 + 1) % 4) // verifica se esta a usar o numero certo para a rotacao
                 match->Rotate(index);
             else
-            {
                 match->Rotate((index2 + 1) % 4);
-            }
 
             col++;
             match->col = col;
@@ -308,8 +455,8 @@ int checkMatchBellow(Board *b, int col, int row)
     Piece *piece = b->board[ind];
     pair<int, int> p = piece->getLeftRight();
 
-    if (pairs.find(p) == pairs.end())   // se o par nao existir
-    { 
+    if (pairs.find(p) == pairs.end()) // se o par nao existir
+    {
         col = b->columns;
         row--;
         b->removeToALimit(ind);
@@ -320,7 +467,7 @@ int checkMatchBellow(Board *b, int col, int row)
     {
         if (match->used == false)
         {
-            int index = find(match->num.begin(), match->num.end(), p.first) - match->num.begin(); // indice do left
+            int index = find(match->num.begin(), match->num.end(), p.first) - match->num.begin();   // indice do left
             int index2 = find(match->num.begin(), match->num.end(), p.second) - match->num.begin(); // indice do right
 
             if (index == (index2 - 1) % 4) // verifica se esta a usar o numero certo para a rotacao
@@ -336,7 +483,7 @@ int checkMatchBellow(Board *b, int col, int row)
             match->used = true;
 
             b->board.push_back(match);
-            
+
             checkMatch(b, match, col, row);
         }
     }
@@ -344,36 +491,39 @@ int checkMatchBellow(Board *b, int col, int row)
     return 0;
 }
 
- vector<Piece *> Intersection(vector<Piece *>& nums1, vector<Piece *>& nums2) {
-        
-        sort(nums1.begin(), nums1.end()); // sort nums1 (non-decreasing order)
-        sort(nums2.begin(), nums2.end()); // sort nums2 (non-decreasing order)
-        
-        int i = 0, j = 0;
-        vector<Piece *> res;
-        
-        while(i < (int) nums1.size() && j < (int) nums2.size()){
-            if(i > 0 && nums1[i - 1] == nums1[i]){
-                i++; // dealing with duplicates in nums1
-            }
-            else if(j > 0 && nums2[j - 1] == nums2[j]){
-                j++; // dealing with duplicates in nums2
-            }
-            else if(nums1[i] < nums2[j]){
-                i++; // if nums1 < nums2, we increment nums1
-            }
-            else if(nums1[i] > nums2[j]){
-                j++; // if nums1 > nums2, we increment nums2
-            }
-            else{
-                res.push_back(nums1[i]); // if none of the above, nums1==nums2 so we add to result
-                i++; j++;
-            }
+vector<Piece *> Intersection(vector<Piece *> &nums1, vector<Piece *> &nums2)
+{
+
+    sort(nums1.begin(), nums1.end()); // sort nums1 (non-decreasing order)
+    sort(nums2.begin(), nums2.end()); // sort nums2 (non-decreasing order)
+
+    int i = 0, j = 0;
+    vector<Piece *> res;
+
+    while (i < (int)nums1.size() && j < (int)nums2.size())
+    {
+        if (i > 0 && nums1[i - 1] == nums1[i])
+            i++; // dealing with duplicates in nums1
+
+        else if (j > 0 && nums2[j - 1] == nums2[j])
+            j++; // dealing with duplicates in nums2
+
+        else if (nums1[i] < nums2[j])
+            i++; // if nums1 < nums2, we increment nums1
+
+        else if (nums1[i] > nums2[j])
+            j++; // if nums1 > nums2, we increment nums2
+
+        else
+        {
+            res.push_back(nums1[i]); // if none of the above, nums1==nums2 so we add to result
+            i++;
+            j++;
         }
-        
-        return res;
-        
     }
+
+    return res;
+}
 
 int checkMatchRightBellow(Board *b, Piece *piece, int col, int row)
 {
@@ -393,20 +543,20 @@ int checkMatchRightBellow(Board *b, Piece *piece, int col, int row)
     Piece *piece2 = b->board[ind];
     pair<int, int> p2 = piece2->getLeftRight();
 
-    if (pairs.find(p2) == pairs.end())   // se o par nao existir
-    { 
+    if (pairs.find(p2) == pairs.end()) // se o par nao existir
+    {
         col = b->columns;
         row--;
         b->removeToALimit(ind);
         return 0;
     }
 
-
     vector<Piece *> possibleHorizontal = pairs[p2];
 
     vector<Piece *> intersection = Intersection(possibleHorizontal, possibleVertical);
 
-    if (intersection.empty()) {
+    if (intersection.empty())
+    {
         col = b->columns;
         row--;
         b->removeToALimit(ind);
@@ -426,79 +576,18 @@ int checkMatchRightBellow(Board *b, Piece *piece, int col, int row)
             {
                 match->Rotate((index2 + 1) % 4);
             }
-            
+
             col++;
             match->col = col;
             match->row = row;
             match->used = true;
 
             b->board.push_back(match);
-            
+
             checkMatch(b, match, col, row);
         }
     }
 
-
     return 0;
 }
-
-/*
-bool tree(Board *b, int row, int col)
-{
-    int ind = (b->board.size() % b->columns) * (row - 1);
-
-    Piece *piece = b->board[ind];
-
-    pair<int, int> p = piece->getBellowAbove();
-    if (pairs.find(p) == pairs.end()) // se o par nao existir
-    {
-        col--;
-        b->removeLeftPiece();
-        return false;
-    }
-
-    for (auto &match : pairs[p])
-    {
-        // cout << " -> " << piece.num[0] << piece.num[1] << piece.num[2] << piece.num[3] << endl;
-        // cout << match->operator==(piece) << endl;
-        if (match->used == false)
-        {
-            int index = find(match->num.begin(), match->num.end(), p.second) - match->num.begin(); // indice do above
-            int index2 = find(match->num.begin(), match->num.end(), p.first) - match->num.begin(); // indice do bellow
-
-            if (index == (index2 + 1) % 4) // verifica se esta a usar o numero certo para a rotacao
-                match->Rotate(index);
-            else
-            {
-                match->Rotate((index2 + 1) % 4);
-            }
-
-            match->col = col;
-            match->row = row;
-            match->used = true;
-
-            b->board.push_back(match);
-            // cout << "SIZE DA PUTA: " << b->board.size() << endl;
-            if ((row * col) == b->n_pieces)
-                return true;
-
-            if (tree(b, row, col++) == true)
-                return true;
-
-            match->row = match->col = 0;
-            match->used = false;
-            int pieceIndex = find(b->board.begin(), b->board.end(), match) - b->board.begin();
-            b->removeToALimit(pieceIndex);
-        }
-    }
-}
 */
-
-void reset(Board *b)
-{
-    b->board.clear();
-    b->pieces.clear();
-    pairs.clear();
-    occurrences.clear();
-    b->n_pieces = b->columns = b->rows = 0;
-}

@@ -1,11 +1,11 @@
 PYFILE = EA_TP1.py
 CPPFILE = EA_TP1.cpp
-EXE = exe.out
-TESTCASE = test.txt
-TESTOUTPUT = test_output.txt
-OUTPUT = output.txt
-DIFF = diff.txt
-TIMEFILE = timefile
+EXE = excluded/exe.out
+TESTCASE = excluded/test1.txt
+TESTOUTPUT = excluded/out1.txt
+OUTPUT = excluded/output.txt
+DIFF = excluded/diff.txt
+TIMEFILE = excluded/timefile
 
 execpp:
 	g++ -std=c++17 -Wall -Wextra -O2 -o ${EXE} ${CPPFILE} -lm 
