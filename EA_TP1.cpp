@@ -1,10 +1,8 @@
 #include <iostream>
 #include <vector>
-#include <string>
 #include <array>
 #include <map>
 #include <algorithm>
-#include <iterator>
 
 using namespace std;
 
@@ -266,7 +264,7 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
     for (auto &match : pairs[p])
     {
         //  cout << match->operator==(piece) << endl;
-        if (match->used == false)
+        if (!match->used)
         {
             // cout << match->num[0] << " " << match->num[1] << " " << match->num[2] << " " << match->num[3] << endl;
 
@@ -296,7 +294,7 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
                 col++;
 
             cout << match->num[0] << " " << match->num[1] << " " << match->num[2] << " " << match->num[3] << endl;
-            if (tree(b, row, col) == true)
+            if (tree(b, row, col))
                 return true;
 
             if (col == 1)
@@ -320,7 +318,7 @@ bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p)
 {
     for (auto &match : pairs[p])
     {
-        if (match->used == false)
+        if (!match->used)
         {
             int index = find(match->num.begin(), match->num.end(), p.second) - match->num.begin(); // indice do right
             int index2 = find(match->num.begin(), match->num.end(), p.first) - match->num.begin(); // indice do left
@@ -356,7 +354,7 @@ bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p)
 
             cout << match->num[0] << " " << match->num[1] << " " << match->num[2] << " " << match->num[3] << endl;
             // cout << "row: " << row << endl;
-            if (tree(b, row, col) == true)
+            if (tree(b, row, col))
                 return true;
 
             // volta para o final da linha anterior
@@ -378,7 +376,7 @@ bool addPeca(Board *b, int row, int col, vector<Piece *> intersection, vector<in
     for (auto &match : intersection)
     {
         cout << "\t\t" << " -> " << match->num[0] << match->num[1] << match->num[2] << match->num[3] << endl;
-        if (match->used == false)
+        if (!match->used)
         {
 
             int index = find(match->num.begin(), match->num.end(), trio[0]) - match->num.begin();  // bellow
@@ -419,7 +417,7 @@ bool addPeca(Board *b, int row, int col, vector<Piece *> intersection, vector<in
             else
                 col++;
 
-            if (tree(b, row, col) == true)
+            if (tree(b, row, col))
                 return true;
 
             // se estiver na ultima coluna volta para a linha de cima
@@ -545,7 +543,7 @@ int main()
             cout << endl;
         }*/
 
-        bool res = false;
+        bool res;
         if (b->columns == 1)
             res = tree(b, 2, 1);
         else
