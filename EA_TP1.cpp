@@ -13,7 +13,7 @@ public:
     int row;
     int col;
     bool used;
-    bool tested;
+    bool three;
 
     Piece(int n0, int n1, int n2, int n3)
     {
@@ -25,7 +25,7 @@ public:
         row = 0;
         col = 0;
         used = false;
-        tested = false;
+        three = false;
     }
 
     void Rotate90()
@@ -84,13 +84,6 @@ public:
         pieces.resize(np); // define o tamanho do vetor de pecas
         // nao se faz o mesmo com o da board para ter metodo de comparacao
         // com o tamanho final do mesmo e o numero existente de pecas
-    }
-
-    void removeLeftPiece()
-    {
-        board.back()->used = false;
-        board.back()->col = board.back()->row = 0;
-        board.pop_back();
     }
 
     void removeToALimit(int index)
@@ -185,14 +178,7 @@ bool tree(Board *b, int row, int col)
     {
         piece = b->board[col - 2];
 
-        // nao foi encontrada nenhuma peca com a coluna e a linha pretendida
-        if (piece == NULL)
-            return false;
-
         pair<int, int> p = piece->getBellowAbove();
-        // se o par da peca da esquerda nao existir
-        if (pairs.find(p) == pairs.end())
-            return false;
 
         if (addPrimeiraLinha(b, 1, col, p))
             return true;
@@ -202,19 +188,10 @@ bool tree(Board *b, int row, int col)
         // get peca de cima
         piece2 = b->board[(row - 2) * (b->columns)];
 
-        // nao foi encontrada nenhuma peca de cima para as linhas depois da primeira
-        if (piece2 == NULL)
-            return false;
-
         pair<int, int> p2 = piece2->getLeftRight();
-
-        //  se o par da peca de cima nao existir
-        if (pairs.find(p2) == pairs.end())
-            return false;
 
         if (addPrimeiraColuna(b, row, 1, p2)) // nao esta a aplicar a rotacao correta
             return true;
-
     }
     else if (row > 1 && row <= b->rows && col > 1 && col <= b->columns)
     {
@@ -222,20 +199,9 @@ bool tree(Board *b, int row, int col)
         piece = b->board[(row - 1) * b->columns + col - 2];      // peca da esquerda
         piece2 = b->board[(row - 2) * (b->columns) + (col - 1)]; // peca de cima
 
-        // nao foi encontrada nenhuma peca com a coluna e a linha pretendida
-        // nao foi encontrada nenhuma peca de cima para as linhas depois da primeira
-        if (piece == NULL || piece2 == NULL)
-            return false;
-
         pair<int, int> p = piece->getBellowAbove();
-        // se o par da peca da esquerda nao existir
-        if (pairs.find(p) == pairs.end())
-            return false;
 
         pair<int, int> p2 = piece2->getLeftRight();
-        // se o par da peca de cima nao existir
-        if (pairs.find(p2) == pairs.end())
-            return false;
 
         // vector com pecas que encaixam segundo o par da peca da esquerda
         vector<Piece *> possibleLeft = pairs[p];
@@ -246,18 +212,8 @@ bool tree(Board *b, int row, int col)
         // intersecao dos 2 vectors
         vector<Piece *> intersection = Intersection(possibleLeft, trio);
 
-        if (intersection.empty())
-            return false;
-
-        /*for (auto &i : intersection)
-        {
-            cout << i->num[0] << " " << i->num[1] << " " << i->num[2] << " " << i->num[3] << endl;
-        }
-        cout << endl;*/
-
         if (addPeca(b, row, col, intersection, trio)) // nao esta a aplicar a rotacao correta
             return true;
-
     }
     return false;
 }
@@ -268,15 +224,17 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
     {
         if (!match->used)
         {
+            if (match->num[0] != p.second || match->num[3] != p.first)
+            {
+                if (match->num[3] == p.second && match->num[2] == p.first)
+                    match->Rotate90();
 
-            if (match->num[3] == p.second && match->num[2] == p.first)
-                match->Rotate90();
+                if (match->num[2] == p.second && match->num[1] == p.first)
+                    match->Rotate180();
 
-            if (match->num[2] == p.second && match->num[1] == p.first)
-                match->Rotate180();
-
-            if (match->num[1] == p.second && match->num[0] == p.first)
-                match->Rotate270();
+                if (match->num[1] == p.second && match->num[0] == p.first)
+                    match->Rotate270();
+            }
 
             match->col = col;
             match->row = row;
@@ -297,6 +255,13 @@ bool addPrimeiraLinha(Board *b, int row, int col, pair<int, int> p)
 
             if (tree(b, row, col))
                 return true;
+
+            if (match->three)
+            {
+                match->Rotate90();
+                if (tree(b, row, col))
+                    return true;
+            }
 
             if (col == 1)
             { // se estiver no inicio da linha volta para o final da linha anterior
@@ -320,15 +285,17 @@ bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p)
     {
         if (!match->used)
         {
+            if (match->num[1] != p.second || match->num[0] != p.first)
+            {
+                if (match->num[0] == p.second && match->num[3] == p.first)
+                    match->Rotate90();
 
-            if (match->num[0] == p.second && match->num[3] == p.first)
-                match->Rotate90();
+                if (match->num[3] == p.second && match->num[2] == p.first)
+                    match->Rotate180();
 
-            if (match->num[3] == p.second && match->num[2] == p.first)
-                match->Rotate180();
-
-            if (match->num[2] == p.second && match->num[1] == p.first)
-                match->Rotate270();
+                if (match->num[2] == p.second && match->num[1] == p.first)
+                    match->Rotate270();
+            }
 
             match->col = col;
             match->row = row;
@@ -342,12 +309,17 @@ bool addPrimeiraColuna(Board *b, int row, int col, pair<int, int> p)
             if (b->columns == 1)
                 row++;
             else
-            {
                 col++;
-            }
 
             if (tree(b, row, col))
                 return true;
+
+            if (match->three)
+            {
+                match->Rotate90();
+                if (tree(b, row, col))
+                    return true;
+            }
 
             if (b->columns == 1)
                 row--;
@@ -368,15 +340,17 @@ bool addPeca(Board *b, int row, int col, vector<Piece *> intersection, vector<in
     {
         if (!match->used)
         {
+            if (match->num[3] != trio[0] || match->num[0] != trio[1] || match->num[1] != trio[2])
+            {
+                if (match->num[0] == trio[2] && match->num[3] == trio[1] && match->num[2] == trio[0])
+                    match->Rotate90();
 
-            if (match->num[0] == trio[2] && match->num[3] == trio[1] && match->num[2] == trio[0])
-                match->Rotate90();
+                if (match->num[3] == trio[2] && match->num[2] == trio[1] && match->num[1] == trio[0])
+                    match->Rotate180();
 
-            if (match->num[3] == trio[2] && match->num[2] == trio[1] && match->num[1] == trio[0])
-                match->Rotate180();
-
-            if (match->num[2] == trio[2] && match->num[1] == trio[1] && match->num[0] == trio[0])
-                match->Rotate270();
+                if (match->num[2] == trio[2] && match->num[1] == trio[1] && match->num[0] == trio[0])
+                    match->Rotate270();
+            }
 
             match->col = col;
             match->row = row;
@@ -398,6 +372,13 @@ bool addPeca(Board *b, int row, int col, vector<Piece *> intersection, vector<in
 
             if (tree(b, row, col))
                 return true;
+
+            if (match->three)
+            {
+                match->Rotate90();
+                if (tree(b, row, col))
+                    return true;
+            }
 
             // se estiver na ultima coluna volta para a linha de cima
             if (col == 1)

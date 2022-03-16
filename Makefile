@@ -1,8 +1,8 @@
 PYFILE = EA_TP1.py
 CPPFILE = EA_TP1.cpp
 EXE = excluded/exe.out
-TESTCASE = excluded/input_extra.txt
-TESTOUTPUT = excluded/output_extra.txt
+TESTCASE = excluded/p933.txt
+TESTOUTPUT = excluded/output_p933.txt
 OUTPUT = excluded/output.txt
 DIFF = excluded/diff.txt
 TIMEFILE = excluded/timefile
