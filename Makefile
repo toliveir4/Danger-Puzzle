@@ -12,6 +12,9 @@ execpp: ${EXE} ${CPPFILE} ${TIMEFILE} ${TESTCASE} ${OUTPUT} ${TESTOUTPUT} ${DIFF
 	/usr/bin/time -v -o ${TIMEFILE} ./${EXE} < ${TESTCASE} > ${OUTPUT}
 	diff -c ${OUTPUT} ${TESTOUTPUT} > ${DIFF}
 
+test: ${EXE} ${SHELL}
+	./excluded/test.sh
+
 exepypy: ${EXE} ${PYFILE} ${TIMEFILE} ${TESTCASE} ${OUTPUT} ${TESTOUTPUT} ${DIFF}
 	/usr/bin/time -v -o ${TIMEFILE} pypy3 ${PYFILE} < ${TESTCASE} > ${OUTPUT}
 	diff -c ${OUTPUT} ${TESTOUTPUT} > ${DIFF}
