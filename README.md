@@ -1,2 +1,2 @@
-# Algorithmic-Strategies
+# Danger Puzzle
  
