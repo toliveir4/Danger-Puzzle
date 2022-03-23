@@ -56,7 +56,7 @@ public:
         num[2] = aux;
     }
 
-    pair<int, int> getBellowAbove()
+    pair<int, int> getBelowAbove()
     {
         return {num[2], num[1]};
     }
@@ -178,7 +178,7 @@ bool tree(Board *b, int row, int col)
     {
         piece = b->board[col - 2];
 
-        pair<int, int> p = piece->getBellowAbove();
+        pair<int, int> p = piece->getBelowAbove();
 
         if (addPrimeiraLinha(b, 1, col, p))
             return true;
@@ -199,14 +199,14 @@ bool tree(Board *b, int row, int col)
         piece = b->board[(row - 1) * b->columns + col - 2];      // peca da esquerda
         piece2 = b->board[(row - 2) * (b->columns) + (col - 1)]; // peca de cima
 
-        pair<int, int> p = piece->getBellowAbove();
+        pair<int, int> p = piece->getBelowAbove();
 
         pair<int, int> p2 = piece2->getLeftRight();
 
         // vector com pecas que encaixam segundo o par da peca da esquerda
         vector<Piece *> possibleLeft = pairs[p];
 
-        // {bellow, above=left, right}
+        // {below, above=left, right}
         vector<int> trio = {p.first, p.second, p2.second};
 
         // intersecao dos 2 vectors
